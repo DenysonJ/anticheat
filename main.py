@@ -65,6 +65,7 @@ def main():
     ac.load_weights(args.load_weights)
 
   test_predict = ac.model.predict(ac.testX)
+  test_predict = test_predict.flatten()
 
   # Print the error
   if args.print_error:
@@ -72,10 +73,10 @@ def main():
 
   if args.plot:
     ac.plot_result(test_predict)
-  
+
   # Save the predictions
-  predicted = [ 1 for i in range(len(test_predict)) if test_predict[i] > args.trigger ]
-  predict = { 'Y': predicted, 'Y_real': ac.testY , 'Y_probability': test_predict}
+  predicted = [ 1 if test_predict[i] > args.trigger else 0 for i in range(len(test_predict))  ]
+  predict = { 'Y': predicted, 'Y_real': ac.testY.flatten() , 'Y_probability': test_predict.flatten()}
 
   pd.DataFrame(predict).to_csv(args.save_predict, index=False)
 
