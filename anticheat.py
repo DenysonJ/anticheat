@@ -1,6 +1,6 @@
 import numpy as np
 from pandas import read_csv
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers import Dense, LSTM
 from keras.callbacks import ModelCheckpoint
 from sklearn.metrics import mean_squared_error
@@ -24,7 +24,7 @@ class AntiAimBot:
 
   # Reshape data for (Sample, TimeSteps, Features)
   # Parameter n_steps defines the number of time steps
-  # Sample: number of samples = len(sequences)/n_steps
+  # Sample: number of samples = len(input)/n_steps
   def split_sequences(self, n_steps: int) -> None:
     X = list()
     i = 0
@@ -61,7 +61,7 @@ class AntiAimBot:
     self.trainY = self.Y[range(splitY)]
     self.testY = self.Y[splitY:]
 
-  def create_RNN(self, hidden_units, activation) -> None:
+  def create_RNN(self, hidden_units, activation, loss='mean_squared_error', optimizer='adam', metrics='accuracy') -> None:
     # Define the model
     # Input shape = (timesteps, features)
     input_shape = (self.trainX.shape[1], self.trainX.shape[2])
@@ -70,7 +70,7 @@ class AntiAimBot:
     self.model = Sequential()
     self.model.add(LSTM(hidden_units, input_shape=input_shape, activation=activation[0]))
     self.model.add(Dense(units=dense_units, activation=activation[1]))
-    self.model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
+    self.model.compile(loss=loss, optimizer=optimizer, metrics=[metrics])
 
   # Train the model
   def train(self, epochs: int, verbose: int, output: ModelCheckpoint) -> None:
@@ -79,10 +79,14 @@ class AntiAimBot:
   # Load weights from a previous training
   def load_weights(self, weights: str) -> None:
     self.model.load_weights(weights)
+  
+  def load_model(self, model: str) -> None:
+    self.model = load_model(model)
 
-  def print_error(self, train_predict, test_predict) -> None:    
+  def print_error(self, test_predict, train_predict=None) -> None:    
     # Error of predictions
-    train_rmse = math.sqrt(mean_squared_error(self.trainY, train_predict))
+    if train_predict is not None:
+      train_rmse = math.sqrt(mean_squared_error(self.trainY, train_predict))
     test_rmse = math.sqrt(mean_squared_error(self.testY, test_predict))
     # Print RMSE
     print('Train RMSE: %.3f RMSE' % (train_rmse))
@@ -115,6 +119,10 @@ def main(argv: list[str]):
   anti.get_train_test(0.8)
   anti.create_RNN(hidden_units=200, activation=['tanh', 'tanh'])
 
+  # Save the model
+  anti.model.save(argv[3])
+
+  # Checkpoint to save the weights
   checkPoint = ModelCheckpoint(argv[2], save_weights_only=True, verbose=1)
   # Save the model
   anti.train(epochs=100, verbose=2, output=checkPoint)
@@ -130,7 +138,7 @@ def main(argv: list[str]):
   anti.plot_result(train_predict, test_predict)
 
 if __name__ == "__main__":
-  if len(argv) != 4:
-    print("Usage: python3 example.py <input.csv> <output.csv> <wheights.hdf5>")
+  if len(argv) != 5:
+    print("Usage: python3 example.py <input.csv> <output.csv> <wheights.hdf5> <model.keras>")
     exit(1)
   main(argv[1:])
