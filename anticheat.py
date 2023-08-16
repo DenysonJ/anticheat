@@ -73,8 +73,9 @@ class AntiAimBot:
     self.model.compile(loss=loss, optimizer=optimizer, metrics=[metrics])
 
   # Train the model
-  def train(self, epochs: int, verbose: int, output: ModelCheckpoint) -> None:
-    self.model.fit(self.trainX, self.trainY, epochs=epochs, verbose=verbose, callbacks=[output])
+  def train(self, epochs: int, verbose: int, output: str) -> None:
+    checkPoint = ModelCheckpoint(output, save_weights_only=True, verbose=verbose)
+    self.model.fit(self.trainX, self.trainY, epochs=epochs, verbose=verbose, callbacks=[checkPoint])
 
   # Load weights from a previous training
   def load_weights(self, weights: str) -> None:
@@ -87,9 +88,10 @@ class AntiAimBot:
     # Error of predictions
     if train_predict is not None:
       train_rmse = math.sqrt(mean_squared_error(self.trainY, train_predict))
+      print('Train RMSE: %.3f RMSE' % (train_rmse))
+
     test_rmse = math.sqrt(mean_squared_error(self.testY, test_predict))
     # Print RMSE
-    print('Train RMSE: %.3f RMSE' % (train_rmse))
     print('Test RMSE: %.3f RMSE' % (test_rmse))    
 
   # Plot the result
@@ -122,10 +124,8 @@ def main(argv: list[str]):
   # Save the model
   anti.model.save(argv[3])
 
-  # Checkpoint to save the weights
-  checkPoint = ModelCheckpoint(argv[2], save_weights_only=True, verbose=1)
   # Save the model
-  anti.train(epochs=100, verbose=2, output=checkPoint)
+  anti.train(epochs=100, verbose=2, output=argv[2])
 
   # make predictions
   train_predict = anti.model.predict(anti.trainX)

@@ -1,4 +1,5 @@
 import argparse
+import pandas as pd
 from anticheat import AntiAimBot
 
 def parse():
@@ -14,7 +15,7 @@ def parse():
   parser.add_argument('-e', '--epochs', type=int, default=150, help='Number of epochs to train the model')
   parser.add_argument('--verbose', type=int, default=2, help='Verbosity of the training process')
   parser.add_argument('-s', '--steps', type=int, default=10, help='Number of steps to be used in the RNN')
-  parser.add_argument('-h', '--hidden', type=int, default=100, help='Number of hidden units to be used in the RNN')
+  parser.add_argument('--hidden', type=int, default=100, help='Number of hidden units to be used in the RNN')
   parser.add_argument('--split_percent', type=float, default=0.8, help='Percentage of the data to be used in the training')
   parser.add_argument('--activation', type=str, default='tanh', help='Activation function to be used in the RNN')
   parser.add_argument('-o', '--optimizer', type=str, default='adam', help='Optimizer to be used in the RNN')
@@ -26,6 +27,8 @@ def parse():
 
   parser.add_argument('--plot', action='store_true', help='Plot the result of the training')
   parser.add_argument('--print_error', action='store_true', help='Print the error of the training')
+
+  parser.add_argument('--save_predict', type=str, default='predict.csv', help='Path to the file with the predictions to be saved')
 
   return parser
 
@@ -44,7 +47,7 @@ def main():
   if args.load is None:
     # Create the RNN
     ac.create_RNN(args.hidden, [args.activation, args.activation], args.loss, args.optimizer, args.metrics)
-    ac.save_model(args.save)
+    ac.model.save(args.save)
 
   # Load the model
   if args.load:
@@ -60,7 +63,17 @@ def main():
   if args.load_weights:
     ac.load_weights(args.load_weights)
 
-  ac.model.predict(ac.testX)
+  test_predict = ac.model.predict(ac.testX)
+
+  # Print the error
+  if args.print_error:
+    ac.print_error(test_predict)
+
+  if args.plot:
+    ac.plot_result(test_predict)
+  
+  # Save the predictions
+  pd.DataFrame(test_predict).to_csv(args.save_predict, index=False, header=['Y'])
 
 
 if __name__ == "__main__":
