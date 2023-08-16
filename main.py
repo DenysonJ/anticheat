@@ -29,6 +29,7 @@ def parse():
   parser.add_argument('--print_error', action='store_true', help='Print the error of the training')
 
   parser.add_argument('--save_predict', type=str, default='predict.csv', help='Path to the file with the predictions to be saved')
+  parser.add_argument('--trigger', type=float, default=0.55, help='Trigger to be used in the predictions')
 
   return parser
 
@@ -73,7 +74,10 @@ def main():
     ac.plot_result(test_predict)
   
   # Save the predictions
-  pd.DataFrame(test_predict).to_csv(args.save_predict, index=False, header=['Y'])
+  predicted = [ 1 for i in range(len(test_predict)) if test_predict[i] > args.trigger ]
+  predict = { 'Y': predicted, 'Y_real': ac.testY , 'Y_probability': test_predict}
+
+  pd.DataFrame(predict).to_csv(args.save_predict, index=False)
 
 
 if __name__ == "__main__":
