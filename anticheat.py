@@ -75,7 +75,9 @@ class AntiAimBot:
   # Train the model
   def train(self, epochs: int, verbose: int, output: str) -> None:
     checkPoint = ModelCheckpoint(output, save_weights_only=True, verbose=verbose)
-    self.model.fit(self.trainX, self.trainY, epochs=epochs, verbose=verbose, callbacks=[checkPoint])
+    history = self.model.fit(self.trainX, self.trainY, epochs=epochs, verbose=verbose, callbacks=[checkPoint])
+
+    return history
 
   # Load weights from a previous training
   def load_weights(self, weights: str) -> None:
