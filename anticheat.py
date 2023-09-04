@@ -1,7 +1,7 @@
 import numpy as np
 from pandas import read_csv
 from keras.models import Sequential, load_model
-from keras.layers import Dense, LSTM
+from keras.layers import Dense, LSTM, Dropout
 from keras.callbacks import ModelCheckpoint
 from sklearn.metrics import mean_squared_error
 from sys import argv
@@ -68,7 +68,10 @@ class AntiAimBot:
     # Output shape = output
     dense_units = self.trainY.shape[1]
     self.model = Sequential()
+    self.model.add(LSTM(hidden_units, input_shape=input_shape, activation=activation[0], return_sequences=True))
+    self.model.add(Dropout(0.2))
     self.model.add(LSTM(hidden_units, input_shape=input_shape, activation=activation[0]))
+    self.model.add(Dropout(0.2))
     self.model.add(Dense(units=dense_units, activation=activation[1]))
     self.model.compile(loss=loss, optimizer=optimizer, metrics=[metrics])
 
